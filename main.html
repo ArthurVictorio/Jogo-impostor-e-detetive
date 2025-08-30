@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <style>
+    :root {
+      --bg: #0f1226;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.18);
+      --text: #e6e8f0;
+      --muted: #a7aec0;
+      --accent: #7c5cff;
+      --accent-2: #4dd0e1;
+      --error: #ff6b6b;
+      --radius: 18px;
+      --shadow: 0 10px 25px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+/* peguei degrade do stacks overflow kkkkkkkkk */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 10% 10%, #1b1f3a 0%, transparent 60%),
+                  radial-gradient(800px 600px at 90% 20%, #1a2f4a 0%, transparent 55%),
+                  linear-gradient(160deg, #0b0e1f 0%, #121532 45%, #0f1226 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* brilho do stack tbm pq nois n e de ferro */
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: calc(var(--radius) + 2px);
+      padding: 2px;
+      background: linear-gradient(135deg, rgba(124,92,255,.6), rgba(77,208,225,.35));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+              mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    header {
+      padding: 28px 28px 8px;
+    }
+    .title {
+      margin: 0 0 6px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+    .subtitle {
+      margin: 0;
+      font-size: .95rem;
+      color: var(--muted);
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+      padding: 20px 28px 28px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+    label { font-size: .9rem; color: var(--muted); }
+
+    .input {
+      width: 100%;
+      padding: 14px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(15,18,38,.65);
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .input::placeholder { color: #8f95aa; }
+    .input:focus {
+      border-color: rgba(124,92,255,.6);
+      box-shadow: 0 0 0 4px rgba(124,92,255,.18);
+      background: rgba(15,18,38,.82);
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 2px;
+    }
+
+    .checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .checkbox input {
+      width: 18px; height: 18px; margin: 0;
+      accent-color: var(--accent);
+      border-radius: 4px;
+    }
+
+    .link {
+      text-decoration: none;
+      color: var(--accent-2);
+      font-size: .9rem;
+    }
+    .link:hover { text-decoration: underline; }
+
+    .btn {
+      margin-top: 6px;
+      width: 100%;
+      padding: 14px 16px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #6ea8ff);
+      color: white;
+      font-weight: 600;
+      letter-spacing: .2px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(124,92,255,.35);
+      transition: transform .06s ease, filter .2s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { filter: grayscale(0.3) brightness(0.9); cursor: not-allowed; }
+
+    .footer {
+      padding: 0 28px 26px;
+      color: var(--muted);
+      font-size: .9rem;
+      text-align: center;
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      height: 1px; width: 1px;
+      overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap; border: 0; padding: 0; margin: -1px;
+    }
+
+    /* Responsivo  */
+    @media (max-width: 380px) {
+      header { padding: 22px 20px 6px; }
+      form { padding: 16px 20px 22px; }
+      .footer { padding: 0 20px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="titulo-login">
+    <header>
+      <h1 id="titulo-login" class="title">Entrar</h1>
+      <p class="subtitle">Use seu nickname e senha para continuar</p>
+    </header>
+    <form action="#" method="post" novalidate>
+      <div class="field">
+        <label for="nickname">Nickname</label>
+        <input
+          class="input"
+          type="text"
+          id="nickname"
+          name="nickname"
+          placeholder="ex.: viadinho"
+          inputmode="text"
+          autocapitalize="off"
+          autocomplete="username"
+          minlength="3"
+          maxlength="24"
+          pattern="[A-Za-z0-9_\.\-]{3,24}"
+          title="faz uma senha boa ai"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <input
+          class="input"
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Sua senha"
+          autocomplete="current-password"
+          minlength="6"
+          required
+        />
+      </div>
+
+      <button class="btn" type="submit">Fazer login</button>
+    </form>
+  </main>
+</body>
+</html>
