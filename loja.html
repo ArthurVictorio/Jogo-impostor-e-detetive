@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loja</title>
+  <style>
+    :root {
+      --bg: #0f1226;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.18);
+      --text: #e6e8f0;
+      --muted: #a7aec0;
+      --accent: #7c5cff;
+      --accent-2: #4dd0e1;
+      --radius: 18px;
+      --shadow: 0 10px 25px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      color: var(--text);
+      background: linear-gradient(160deg, #0b0e1f 0%, #121532 45%, #0f1226 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(8px);
+      font-weight: bold;
+    }
+    .moedas { color: var(--accent-2); }
+
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .carrossel {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .personagem {
+      width: 200px;
+      height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .personagem img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: cover;
+    }
+
+    .seta {
+      font-size: 2rem;
+      background: none;
+      border: none;
+      color: var(--accent-2);
+      cursor: pointer;
+      transition: transform .2s;
+    }
+    .seta:hover { transform: scale(1.2); }
+
+    .info {
+      text-align: center;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      box-shadow: var(--shadow);
+    }
+    .preco { color: var(--muted); margin-bottom: 10px; }
+
+    .btn {
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #6ea8ff);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .06s ease, filter .2s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { filter: grayscale(1) brightness(.7); cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>Loja</div>
+    <div class="moedas">Moedas: <span id="saldo">1000</span></div>
+  </header>
+
+  <main>
+    <div class="carrossel">
+      <button class="seta" onclick="anterior()">⟨</button>
+      <div class="personagem">
+        <img id="imgPersonagem" src="" alt="Personagem">
+      </div>
+      <button class="seta" onclick="proximo()">⟩</button>
+    </div>
+
+    <div class="info">
+      <div id="nome">Guerreiro</div>
+      <div class="preco" id="preco">50 moedas</div>
+      <button class="btn" id="btnComprar" onclick="comprar()">Comprar</button>
+    </div>
+  </main>
+
+  <script>
+    const personagens = [
+      { nome: "Guerreiro", preco: 50, img: "" },
+      { nome: "Arqueira", preco: 70, img: "" },
+      { nome: "Mago", preco: 90, img: "" }
+    ];
+
+    let saldo = 1000;
+    let indice = 0;
+
+    const saldoEl = document.getElementById('saldo');
+    const nomeEl = document.getElementById('nome');
+    const precoEl = document.getElementById('preco');
+    const imgEl = document.getElementById('imgPersonagem');
+    const btnComprar = document.getElementById('btnComprar');
+
+    function atualizar() {
+      const p = personagens[indice];
+      nomeEl.textContent = p.nome;
+      precoEl.textContent = p.preco + " moedas";
+      imgEl.src = p.img;
+
+      if (p.comprado) {
+        btnComprar.textContent = "Selecionado";
+        btnComprar.disabled = true;
+      } else {
+        btnComprar.textContent = "Comprar";
+        btnComprar.disabled = false;
+      }
+    }
+
+    function comprar() {
+      const p = personagens[indice];
+      if (saldo >= p.preco && !p.comprado) {
+        saldo -= p.preco;
+        p.comprado = true;
+        saldoEl.textContent = saldo;
+        atualizar();
+      } else if (saldo < p.preco) {
+        alert("Moedas insuficientes!");
+      }
+    }
+
+    function anterior() {
+      indice = (indice - 1 + personagens.length) % personagens.length;
+      atualizar();
+    }
+
+    function proximo() {
+      indice = (indice + 1) % personagens.length;
+      atualizar();
+    }
+
+    atualizar();
+  </script>
+</body>
+</html>
