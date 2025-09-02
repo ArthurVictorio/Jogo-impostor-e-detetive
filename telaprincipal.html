@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MENU</title>
+  <style>
+    :root {
+      --bg: #0f1226;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.18);
+      --text: #e6e8f0;
+      --muted: #a7aec0;
+      --accent: #7c5cff;
+      --accent-2: #4dd0e1;
+      --radius: 18px;
+      --shadow: 0 10px 25px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+      --danger: #ff4d4d;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      color: var(--text);
+      background: linear-gradient(160deg, #0b0e1f 0%, #121532 45%, #0f1226 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(8px);
+      font-weight: bold;
+      position: relative;
+    }
+    .moedas { color: var(--accent-2); }
+    .titulo {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .nickname {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--danger);
+    }
+
+    .dev-tag {
+      background: var(--danger);
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-right: 6px;
+    }
+
+    .player-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .player-card img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: var(--radius);
+      border: 2px solid var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .botoes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .btn {
+      padding: 14px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #6ea8ff);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .06s ease, filter .2s ease;
+      text-align: center;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { filter: grayscale(1) brightness(.7); cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="titulo">Jogo do Isaque</div>
+    <div class="moedas">Moedas: <span id="saldo">1000</span></div>
+  </header>
+
+  <main>
+    <div class="nickname"><span class="dev-tag">DEV</span>guizin</div>
+    <div class="player-card">
+      <img id="skin" src="" alt="Skin do jogador">
+    </div>
+
+    <div class="botoes">
+      <button class="btn">Loja</button>
+      <button class="btn">Regras</button>
+      <button class="btn">Online (Global)</button>
+      <button class="btn">Offline (Bot)</button>
+    </div>
+  </main>
+</body>
+</html>
