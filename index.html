@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Mentiroso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; 
+            color: #e6e6e6;
+        }
+        .container {
+            max-width: 900px;
+            min-height: 100vh;
+        }
+        .card {
+            background-color: #161b22;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid #30363d;
+        }
+        .btn-primary {
+            background-color: #238636;
+            color: white;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(35, 134, 54, 0.4);
+        }
+        .btn-primary:hover {
+            background-color: #2ea043;
+        }
+        .btn-secondary {
+            background-color: #30363d;
+            color: #c9d1d9;
+            transition: background-color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #484f58;
+        }
+        #chatMessages {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+        }
+        .message-sent {
+            text-align: right;
+        }
+        .message-received {
+            text-align: left;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div id="app" class="container mx-auto flex flex-col items-center py-8">
+        <h1 class="text-4xl font-bold mb-8 text-center text-teal-400">O Mentiroso 🤥</h1>
+
+        <div id="lobbyScreen" class="w-full max-w-lg card p-6 space-y-4">
+            <h2 class="text-2xl font-semibold text-center mb-4">Entrar no Jogo</h2>
+            <p id="loadingMessage" class="text-center text-yellow-500 hidden">Carregando dados...</p>
+            <input type="text" id="playerNameInput" placeholder="Seu Nome" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-teal-500 focus:border-teal-500 text-white" maxlength="15">
+            <button id="joinButton" onclick="joinGame()" class="w-full p-3 btn-primary rounded-lg font-semibold">Entrar</button>
+
+            <div id="playerListContainer" class="mt-6 pt-4 border-t border-gray-700">
+                <h3 class="text-xl font-medium mb-3">Jogadores na Sala (<span id="playerCount">0</span>)</h3>
+                <ul id="playerList" class="space-y-2">
+                    </ul>
+            </div>
+            
+            <button id="startButton" onclick="startGame()" class="w-full p-3 btn-secondary rounded-lg font-semibold mt-4" disabled>Iniciar Jogo</button>
+            <p id="lobbyMessage" class="text-center text-sm text-yellow-400 mt-2 hidden">Mínimo de 2 jogadores para iniciar.</p>
+        </div>
+
+        <div id="roleScreen" class="w-full max-w-lg card p-8 text-center hidden">
+            <h2 class="text-3xl font-bold mb-4">Sua Identidade é...</h2>
+            <p id="roleDisplay" class="text-5xl font-extrabold mb-6"></p>
+            <h3 class="text-2xl font-medium mb-2 text-teal-300">Tema da Rodada:</h3>
+            <p id="themeDisplay" class="text-xl font-light"></p>
+        </div>
+
+        <div id="factsScreen" class="w-full max-w-lg card p-6 space-y-4 hidden">
+            <h2 class="text-2xl font-semibold text-center">Digite seu Fato/Mentira</h2>
+            <p class="text-sm text-center text-gray-400">Baseado no tema: <strong id="factsThemeDisplay" class="text-teal-300"></strong></p>
+            <textarea id="factInput" rows="4" placeholder="Escreva seu fato ou sua mentira..." class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-teal-500 focus:border-teal-500 text-white"></textarea>
+            <button id="submitFactButton" onclick="submitFact()" class="w-full p-3 btn-primary rounded-lg font-semibold">Enviar Declaração</button>
+        </div>
+
+        <div id="votacaoScreen" class="w-full card p-6 space-y-6 hidden">
+            <h2 class="text-2xl font-semibold text-center mb-4">Fase de Discussão e Votação</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <div>
+                    <h3 class="text-xl font-medium mb-3 border-b border-gray-700 pb-2 text-teal-300">Declarações dos Jogadores:</h3>
+                    <ul id="factsList" class="space-y-4"></ul>
+
+                    <div id="voteArea" class="mt-6 pt-4 border-t border-gray-700 space-y-3">
+                        <p id="voteInstruction" class="text-lg text-center font-medium">Vote em quem você acha que é o Mentiroso:</p>
+                        <div id="votingButtons" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-medium mb-3 border-b border-gray-700 pb-2 text-yellow-300">Chat da Discussão</h3>
+                    <div id="chatMessages" class="p-3 mb-3"></div>
+                    
+                    <div class="flex space-x-2">
+                        <input type="text" id="chatInput" placeholder="Sua mensagem..." class="flex-grow p-3 bg-gray-700 border border-gray-600 rounded-l-lg focus:ring-yellow-500 focus:border-yellow-500 text-white" onkeydown="if(event.key === 'Enter') sendMessage()">
+                        <button onclick="sendMessage()" class="p-3 btn-secondary rounded-r-lg font-semibold">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultScreen" class="w-full max-w-lg card p-8 text-center hidden space-y-4">
+            <h2 class="text-3xl font-bold mb-4 text-red-500">FIM DA RODADA</h2>
+            <div id="mentirosoReveal" class="text-xl">
+                O Mentiroso era: <strong class="text-teal-400"></strong>
+            </div>
+            <div id="resultText" class="text-2xl font-semibold"></div>
+
+            <div id="detetiveVoteReveal" class="text-xl mt-4 hidden"></div>
+            <div id="voteDetails" class="mt-4 pt-4 border-t border-gray-700 text-left">
+                <h3 class="text-xl font-medium mb-2">Contagem de Votos:</h3>
+                <ul id="voteSummary" class="list-disc pl-5 space-y-1"></ul>
+            </div>
+            <button onclick="window.location.reload()" class="w-full p-3 btn-primary rounded-lg font-semibold mt-4">Jogar Novamente</button>
+        </div>
+
+        <p id="errorBox" class="text-red-500 mt-4 hidden text-center"></p>
+
+    </div>
+
+    <script type="module"> 
+        //Variáveis de Jogo
+        const socket = io();
+        let myId = null;
+        let myName = ""; //Variável global pro nome
+        let players = []; 
+        let facts = {};
+        const ESTADO_SALA = {
+            LOBBY: 'lobby',
+            ROLE: 'espera-role',
+            FATOS: 'coletandoFatos',
+            VOTACAO: 'votando',
+            RESULTADO: 'resultado'
+        };
+
+        
+        // FUNÇÕES DE INTERFACE(UI)
+
+        function updateScreen(estado) {
+            document.querySelectorAll('#app > div').forEach(screen => {
+                // Cole gui aqui tudo termina com screen ok.
+                if (screen.id.endsWith('Screen')) {
+                    screen.classList.add('hidden');
+                }
+            });
+
+            switch (estado) {
+                case ESTADO_SALA.LOBBY:
+                    document.getElementById('lobbyScreen').classList.remove('hidden');
+                    break;
+                case ESTADO_SALA.ROLE:
+                    document.getElementById('roleScreen').classList.remove('hidden');
+                    break;
+                case ESTADO_SALA.FATOS:
+                    document.getElementById('factsScreen').classList.remove('hidden');
+                    document.getElementById('factInput').disabled = false;
+                    document.getElementById('submitFactButton').disabled = false;
+                    document.getElementById('submitFactButton').textContent = 'Enviar Declaração';
+                    break;
+                case ESTADO_SALA.VOTACAO:
+                    document.getElementById('votacaoScreen').classList.remove('hidden');
+                    document.getElementById('chatMessages').innerHTML = '';
+                    break;
+                case ESTADO_SALA.RESULTADO:
+                    document.getElementById('resultScreen').classList.remove('hidden');
+                    break;
+            }
+        }
+
+        function displayPlayerList(playerList) {
+            players = playerList.sort((a, b) => b.score - a.score); 
+            const list = document.getElementById('playerList');
+            list.innerHTML = '';
+            
+            players.forEach(player => {
+                const li = document.createElement('li');
+                li.className = 'p-2 bg-gray-800 rounded-md flex justify-between items-center';
+                li.innerHTML = `
+                    <span>${player.nome} <strong class="text-yellow-400">(${player.score} pts)</strong></span> 
+                    ${player.id === myId ? '<span class="text-teal-400 text-xs">(Você)</span>' : ''}
+                `;
+                list.appendChild(li);
+            });
+
+            document.getElementById('playerCount').textContent = playerList.length;
+
+            const startButton = document.getElementById('startButton');
+            const lobbyMessage = document.getElementById('lobbyMessage');
+            if (playerList.length >= 2) {
+                startButton.disabled = false;
+                startButton.classList.remove('btn-secondary');
+                startButton.classList.add('btn-primary');
+                lobbyMessage.classList.add('hidden');
+            } else {
+                startButton.disabled = true;
+                startButton.classList.remove('btn-primary');
+                startButton.classList.add('btn-secondary');
+                lobbyMessage.classList.remove('hidden');
+            }
+        }
+        
+        //funcoes de logica do game
+
+
+        async function joinGame() {
+            const nameInput = document.getElementById('playerNameInput');
+            const joinButton = document.getElementById('joinButton');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                document.getElementById('errorBox').textContent = "Por favor, digite seu nome para entrar.";
+                document.getElementById('errorBox').classList.remove('hidden');
+                return;
+            }
+            
+            // 1. Salva o nome localmente aq
+            myName = name; 
+
+            nameInput.disabled = true;
+            joinButton.disabled = true;
+            joinButton.textContent = 'Conectando...';
+
+            // 3. ENVIA O EVENTO PARA O SERVIDOR
+            // O servidor deverá processar isso, atribuir um ID e enviar 'gameState' ou 'playerListUpdate'
+            socket.emit('joinGame', { nome: myName });
+
+
+            document.getElementById('errorBox').classList.add('hidden');
+        }
+
+        // EVENTOS DO SOCKET
+
+        socket.on('finalResults', async (results) => {
+            updateScreen(ESTADO_SALA.RESULTADO);
+
+            // Lógica de Exibição de Resultado
+            const mentirosoNome = results.mentirosoReal.nome;
+            const vencedor = results.vencedor;
+            const acusado = players.find(p => p.id === results.acusadoId);
+            const acusadoNome = acusado ? acusado.nome : 'Ninguém (Empate)';
+
+            document.querySelector('#mentirosoReveal strong').textContent = mentirosoNome;
+            
+            const resultText = document.getElementById('resultText');
+            resultText.innerHTML = '';
+
+            if (vencedor === 'detetive') {
+                const detetiveNome = players.find(p => p.id === results.votoDetetive.eleitorId).nome;
+                resultText.innerHTML = `<span class="text-blue-500 font-bold">Vitória do Detetive!</span> O Detetive (${detetiveNome}) acertou o Mentiroso.`;
+            } else if (vencedor === 'mentiroso') {
+                if (results.votoDetetive && results.votoDetetive.votadoId !== results.mentirosoReal.id) {
+                     const detetiveNome = players.find(p => p.id === results.votoDetetive.eleitorId).nome;
+                     const votoErradoNome = players.find(p => p.id === results.votoDetetive.votadoId).nome;
+                     resultText.innerHTML = `<span class="text-red-500 font-bold">Vitória do Mentiroso!</span> O Detetive (${detetiveNome}) votou em ${votoErradoNome} (Inocente).`;
+                } else {
+                    resultText.innerHTML = `<span class="text-red-500 font-bold">Vitória do Mentiroso!</span> A maioria votou em ${acusadoNome} (Inocente).`;
+                }
+            } else { 
+                resultText.innerHTML = `<span class="text-green-500 font-bold">Vitória dos Inocentes!</span> Eles identificaram corretamente o Mentiroso (${acusadoNome}).`;
+            }
+
+            const detetiveVoteReveal = document.getElementById('detetiveVoteReveal');
+            detetiveVoteReveal.classList.add('hidden');
+            detetiveVoteReveal.innerHTML = '';
+
+            if (results.votoDetetive && results.votoDetetive.isRevelado) {
+                const detetive = players.find(p => p.id === results.votoDetetive.eleitorId);
+                const votadoPeloDetetive = players.find(p => p.id === results.votoDetetive.votadoId);
+                
+                detetiveVoteReveal.classList.remove('hidden');
+                detetiveVoteReveal.className = 'text-xl mt-4 p-3 bg-red-900/50 rounded-lg border border-red-700';
+                detetiveVoteReveal.innerHTML = `
+                    <p class="font-bold text-red-300">VOTO REVELADO DO DETETIVE:</p>
+                    <p class="text-white">O Detetive (${detetive.nome}) foi o mais votado e **votou em ${votadoPeloDetetive.nome}**.</p>
+                `;
+            }
+        
+    
+        });
+        
+        function displayFactsAndVoting() {
+            const list = document.getElementById('factsList');
+            const votingButtons = document.getElementById('votingButtons');
+            list.innerHTML = '';
+            votingButtons.innerHTML = '';
+            
+            const factKeys = Object.keys(facts);
+
+            players.forEach(player => {
+                if (factKeys.includes(player.id)) {
+                    const li = document.createElement('li');
+                    li.className = 'card p-3 border-l-4 border-teal-500 space-y-1';
+                    li.innerHTML = `<p class="font-semibold text-teal-300">${player.nome}:</p><p class="text-white">${facts[player.id]}</p>`;
+                    list.appendChild(li);
+
+                    if (player.id !== myId) {
+                        const button = document.createElement('button');
+                        button.textContent = `Votar em ${player.nome}`;
+                        button.className = 'w-full p-3 btn-secondary rounded-lg font-semibold';
+                        button.onclick = () => submitVote(player.id);
+                        button.id = `voteBtn-${player.id}`;
+                        votingButtons.appendChild(button);
+                    }
+                }
+            });
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (message === '') return;
+
+            socket.emit('chatMessage', message);
+            input.value = ''; 
+        }
+
+        function displayMessage({ sender, text }) {
+            const chatMessages = document.getElementById('chatMessages');
+            const isMe = sender === myName;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `my-2 p-2 max-w-[85%] rounded-xl shadow-md ${isMe ? 'message-sent bg-blue-900 ml-auto' : 'message-received bg-gray-600 mr-auto'}`;
+            
+            const senderSpan = document.createElement('span');
+            senderSpan.className = `font-bold text-sm ${isMe ? 'text-blue-200' : 'text-yellow-300'}`;
+            senderSpan.textContent = isMe ? 'Você' : sender;
+            
+            const textP = document.createElement('p');
+            textP.className = 'text-white text-base break-words';
+            textP.textContent = text;
+            
+            messageDiv.appendChild(senderSpan);
+            messageDiv.appendChild(textP);
+            
+            chatMessages.appendChild(messageDiv);
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function startGame() {
+            socket.emit('startGame');
+        }
+
+        function submitFact() {
+            const fact = document.getElementById('factInput').value.trim();
+            if (fact) {
+                socket.emit('submitFact', fact);
+                document.getElementById('factInput').disabled = true;
+                document.getElementById('submitFactButton').disabled = true;
+                document.getElementById('submitFactButton').textContent = 'Aguardando outros jogadores...';
+            }
+        }
+
+        function submitVote(votadoId) {
+            socket.emit('submitVote', votadoId);
+            document.querySelectorAll('#votingButtons button').forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('bg-gray-700', 'text-gray-400');
+            });
+
+            const votedButton = document.getElementById(`voteBtn-${votadoId}`);
+            if(votedButton) {
+                votedButton.textContent = `${votedButton.textContent} (Votado!)`;
+                votedButton.classList.remove('bg-gray-700');
+                votedButton.classList.add('bg-red-700');
+            }
+            document.getElementById('voteInstruction').textContent = 'Seu voto foi registrado! Aguarde...';
+        }
+
+        socket.on('gameState', ({ estado, jogadorId }) => {
+            if (jogadorId) {
+                myId = jogadorId;
+                
+            }
+            updateScreen(estado);
+        });
+
+        socket.on('playerListUpdate', displayPlayerList);
+        
+        socket.on('roleAssignment', ({ role, tema }) => { 
+            const roleDisplay = document.getElementById('roleDisplay');
+            const themeDisplay = document.getElementById('themeDisplay');
+            const factsThemeDisplay = document.getElementById('factsThemeDisplay');
+            const roleScreen = document.getElementById('roleScreen');
+
+            let hintParagraph = roleScreen.querySelector('#detetiveHint');
+            if (hintParagraph) {
+                hintParagraph.remove();
+            }
+
+            roleDisplay.textContent = role.toUpperCase();
+            themeDisplay.textContent = tema;
+            factsThemeDisplay.textContent = tema;
+            
+            roleDisplay.classList.remove('text-green-500', 'text-red-500', 'text-blue-500');
+
+            if (role === 'mentiroso') {
+                roleDisplay.classList.add('text-red-500');
+            } else if (role === 'detetive') {
+                roleDisplay.classList.add('text-blue-500');
+                
+                const newHintParagraph = document.createElement('p');
+                newHintParagraph.id = 'detetiveHint';
+                newHintParagraph.className = 'text-xl font-semibold mt-4 p-3 bg-blue-900/50 rounded-lg border border-blue-700';
+                newHintParagraph.innerHTML = `
+                    <span class="text-blue-300">VOCÊ É O DETETIVE!</span>
+                    <br>
+                    Seu voto define o jogo: Se acertar o Mentiroso, você vence! Se errar, o Mentiroso vence!
+                `;
+                roleScreen.appendChild(newHintParagraph);
+            } else { 
+                roleDisplay.classList.add('text-green-500');
+            }
+        });
+
+        socket.on('allFactsCollected', (data) => {
+            facts = data.fatos;
+            players = data.jogadores; 
+            displayFactsAndVoting();
+        });
+        
+        socket.on('receiveMessage', displayMessage);
+        
+        socket.on('error', (message) => {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = `Erro: ${message}`;
+            errorBox.classList.remove('hidden');
+
+           
+            document.getElementById('playerNameInput').disabled = false;
+            document.getElementById('joinButton').disabled = false;
+            document.getElementById('joinButton').textContent = 'Entrar';
+        });
+
+        //
+        window.joinGame = joinGame;
+        window.startGame = startGame;
+        window.submitFact = submitFact;
+        window.sendMessage = sendMessage;
+        window.submitVote = submitVote; //
+        
+    </script>
+</body>
+</html>
